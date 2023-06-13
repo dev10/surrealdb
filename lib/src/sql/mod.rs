@@ -70,6 +70,7 @@ pub(crate) mod view;
 #[cfg(test)]
 pub(crate) mod test;
 
+pub mod serde;
 pub mod statements;
 
 pub use self::parser::*;

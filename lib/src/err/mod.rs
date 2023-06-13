@@ -1,8 +1,7 @@
 use crate::sql::idiom::Idiom;
 use crate::sql::value::Value;
 use base64_lib::DecodeError as Base64Error;
-use bincode::Error as BincodeError;
-use bung::encode::Error as SerdeError;
+use bincode::Error as SerdeError;
 use fst::Error as FstError;
 use jsonwebtoken::errors::Error as JWTError;
 use serde::Serialize;
@@ -439,10 +438,6 @@ pub enum Error {
 	/// Represents an error when analyzing a value
 	#[error("A string can't be analyzed: {0}")]
 	AnalyzerError(String),
-
-	/// Represents an underlying error with Bincode serializing / deserializing
-	#[error("Bincode error: {0}")]
-	Bincode(#[from] BincodeError),
 
 	/// Represents an underlying error with FST
 	#[error("FstError error: {0}")]
