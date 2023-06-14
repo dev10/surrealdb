@@ -10,7 +10,6 @@ use crate::sql::value::serde::ser;
 use crate::sql::value::Value;
 use crate::sql::Block;
 use crate::sql::Bytes;
-use crate::sql::Datetime;
 use crate::sql::Duration;
 use crate::sql::Future;
 use crate::sql::Ident;
@@ -19,9 +18,8 @@ use crate::sql::Param;
 use crate::sql::Strand;
 use crate::sql::Table;
 use crate::sql::Uuid;
-use bigdecimal::BigDecimal;
-use bigdecimal::FromPrimitive;
 use map::SerializeValueMap;
+use rust_decimal::Decimal;
 use ser::edges::SerializeEdges;
 use ser::expression::SerializeExpression;
 use ser::function::SerializeFunction;
@@ -96,9 +94,10 @@ impl ser::Serializer for Serializer {
 	}
 
 	fn serialize_i128(self, value: i128) -> Result<Self::Ok, Error> {
-		match BigDecimal::from_i128(value) {
-			Some(decimal) => Ok(decimal.into()),
-			None => Err(Error::TryFrom(value.to_string(), "BigDecimal")),
+		// TODO: Replace with native 128-bit integer support.
+		match Decimal::try_from(value) {
+			Ok(decimal) => Ok(decimal.into()),
+			_ => Err(Error::TryFrom(value.to_string(), "Decimal")),
 		}
 	}
 
@@ -123,9 +122,10 @@ impl ser::Serializer for Serializer {
 	}
 
 	fn serialize_u128(self, value: u128) -> Result<Self::Ok, Error> {
-		match BigDecimal::from_u128(value) {
-			Some(decimal) => Ok(decimal.into()),
-			None => Err(Error::TryFrom(value.to_string(), "BigDecimal")),
+		// TODO: replace with native 128-bit integer support.
+		match Decimal::try_from(value) {
+			Ok(decimal) => Ok(decimal.into()),
+			_ => Err(Error::TryFrom(value.to_string(), "Decimal")),
 		}
 	}
 
@@ -226,7 +226,7 @@ impl ser::Serializer for Serializer {
 				Ok(Value::Uuid(Uuid(value.serialize(ser::uuid::Serializer.wrap())?)))
 			}
 			sql::datetime::TOKEN => {
-				Ok(Value::Datetime(Datetime(value.serialize(ser::datetime::Serializer.wrap())?)))
+				Ok(Value::Datetime(value.serialize(ser::datetime::Serializer.wrap())?))
 			}
 			_ => value.serialize(self.wrap()),
 		}
@@ -807,7 +807,7 @@ mod tests {
 
 	#[test]
 	fn function() {
-		let function = Box::new(Function::Cast(Default::default(), Default::default()));
+		let function = Box::new(Function::Normal(Default::default(), Default::default()));
 		let value = to_value(&function).unwrap();
 		let expected = Value::Function(function);
 		assert_eq!(value, expected);
